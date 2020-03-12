@@ -11,14 +11,14 @@ import javax.swing.*;
 /**
  * @author Matthias Arzt
  */
-public class FeatureSettingsGuiTest {
+public class FeatureSettingsUITest {
 
 	public static void main(String... args) throws InterruptedException {
 		Context context = new Context();
 		GlobalSettings settings = GlobalSettings.default2d().build();
 		FeatureSettings fs = new FeatureSettings(settings, GroupedFeatures.gauss());
-		FeatureSettingsGui gui = new FeatureSettingsGui(context, fs);
-		showFrame(gui.getComponent());
+		FeatureSettingsUI gui = new FeatureSettingsUI(context, fs);
+		showFrame(gui);
 		System.out.println(gui.get().toJson());
 	}
 
