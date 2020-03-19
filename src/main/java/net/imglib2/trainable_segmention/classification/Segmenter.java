@@ -104,7 +104,7 @@ public class Segmenter {
 		return rai;
 	}
 
-	public synchronized void segment(RandomAccessibleInterval<? extends IntegerType<?>> out, RandomAccessible<?> image)
+	public void segment(RandomAccessibleInterval<? extends IntegerType<?>> out, RandomAccessible<?> image)
 	{
 		RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
 		CLIJ2 clij = CLIJ2.getInstance();
