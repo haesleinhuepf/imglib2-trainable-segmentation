@@ -107,7 +107,7 @@ public class Segmenter {
 		RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
 		CLIJ2 clij = CLIJ2.getInstance();
 		try(
-			CLIJMultiChannelImage featureStack = features.applyWithCLIJ(image, out);
+			CLIJMultiChannelImage featureStack = features.applyUseGpu(image, out);
 			ClearCLBuffer segmentationBuffer = prediction.segment(clij, featureStack)
 		)
 		{
