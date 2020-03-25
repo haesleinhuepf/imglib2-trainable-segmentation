@@ -3,7 +3,6 @@ package clij;
 import ij.ImagePlus;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.imagej.ImgPlus;
-import net.imagej.patcher.LegacyInjector;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.VirtualStackAdapter;
@@ -19,10 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class CLIJFeatureCalculatorTest {
-
-	static {
-		LegacyInjector.preinit();
-	}
 
 	private CLIJ2 clij;
 
