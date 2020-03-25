@@ -159,6 +159,10 @@
 			<version>0.21.7</version>
 			<exclusions>
 				<exclusion>
+					<groupId>net.imagej</groupId>
+					<artifactId>imagej-legacy</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>com.google.android.tools</groupId>
 					<artifactId>dx</artifactId>
 				</exclusion>
