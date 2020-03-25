@@ -155,8 +155,8 @@
 		</dependency>
 		<dependency>
 			<groupId>net.haesleinhuepf</groupId>
-			<artifactId>clij2_</artifactId>
-			<version>0.26.1</version>
+			<artifactId>clij-advanced-filters_</artifactId>
+			<version>0.21.7</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.google.android.tools</groupId>
