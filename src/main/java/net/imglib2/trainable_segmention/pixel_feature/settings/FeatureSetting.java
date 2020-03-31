@@ -87,7 +87,6 @@ public class FeatureSetting {
 	}
 
 	public FeatureOp newInstance(OpEnvironment ops, GlobalSettings globalSettings) {
-		@SuppressWarnings("unchecked")
 		FeatureOp delegateObject = (FeatureOp) asModule(globalSettings).getDelegateObject();
 		ops.context().inject(delegateObject);
 		delegateObject.setEnvironment(ops);
