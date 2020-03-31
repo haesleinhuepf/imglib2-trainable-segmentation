@@ -81,6 +81,7 @@
 		<license.copyrightOwners>Matthias Arzt</license.copyrightOwners>
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
+		<clij2_.verson>0.26.3</clij2_.verson>
 	</properties>
 
 	<repositories>
@@ -155,8 +156,8 @@
 		</dependency>
 		<dependency>
 			<groupId>net.haesleinhuepf</groupId>
-			<artifactId>clij-advanced-filters_</artifactId>
-			<version>0.21.7</version>
+			<artifactId>clij2_</artifactId>
+			<version>${clij2_.verson}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>net.imagej</groupId>
