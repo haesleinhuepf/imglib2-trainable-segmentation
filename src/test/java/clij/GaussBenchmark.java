@@ -39,6 +39,7 @@ public class GaussBenchmark {
 	private final CLIJ2 clij = CLIJ2.getInstance();
 
 	private final FinalInterval interval = new FinalInterval(64, 64, 64);
+	private final ClearCLBuffer inputBuffer = clij.push(RandomImgs.seed(1).nextImage(new FloatType(), interval));
 	private final ClearCLBuffer output = clij.create(new long[]{64, 64, 64});
 	private final RandomAccessible<FloatType> input = Utils.dirac(3);
 	private final ComputeCache cache = new ComputeCache(clij, input, new double[]{1, 1, 1});
@@ -48,6 +49,7 @@ public class GaussBenchmark {
 	public void setUp() {
 		content.request(interval);
 	}
+
 	@TearDown
 	public void tearDown() {
 		output.close();
@@ -57,6 +59,12 @@ public class GaussBenchmark {
 	@Benchmark
 	public RandomAccessibleInterval benchmarkGauss() {
 		return clij.pullRAI(content.load(interval));
+	}
+
+	@Benchmark
+	public RandomAccessibleInterval benchmarkClij2Gauss() {
+		clij.gaussianBlur3D(inputBuffer, output, 8, 8, 8);
+		return clij.pullRAI(output);
 	}
 
 	public static void main(String... args) throws RunnerException {
