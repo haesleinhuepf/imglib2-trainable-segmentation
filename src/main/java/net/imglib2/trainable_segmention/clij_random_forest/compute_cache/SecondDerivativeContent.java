@@ -13,10 +13,12 @@ import java.util.Objects;
 
 public class SecondDerivativeContent implements ComputeCache.Content {
 
+	private final ComputeCache cache;
 	private final ComputeCache.Content input;
 	private final int d;
 
-	public SecondDerivativeContent(ComputeCache.Content input, int d) {
+	public SecondDerivativeContent(ComputeCache cache, ComputeCache.Content input, int d) {
+		this.cache = cache;
 		this.input = input;
 		this.d = d;
 	}
@@ -34,7 +36,7 @@ public class SecondDerivativeContent implements ComputeCache.Content {
 	}
 
 	@Override
-	public void request(ComputeCache cache, Interval interval) {
+	public void request( Interval interval) {
 		cache.request(input, requiredInput(interval));
 	}
 
@@ -49,7 +51,7 @@ public class SecondDerivativeContent implements ComputeCache.Content {
 	}
 
 	@Override
-	public ClearCLBuffer load(ComputeCache cache, Interval interval) {
+	public ClearCLBuffer load(Interval interval) {
 		CLIJ2 clij = cache.clij();
 		double[] pixelSize = cache.pixelSize();
 		CLIJView source = cache.get(input, requiredInput(interval));
