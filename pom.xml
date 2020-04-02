@@ -81,7 +81,7 @@
 		<license.copyrightOwners>Matthias Arzt</license.copyrightOwners>
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
-		<clij2_.verson>0.26.3</clij2_.verson>
+		<clij2_.verson>0.26.5</clij2_.verson>
 	</properties>
 
 	<repositories>
