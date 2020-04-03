@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
+import clij.GpuImage;
 import clij.GpuApi;
 import net.imglib2.*;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -126,7 +126,7 @@ public class Segmenter {
 		RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
 		try(
 				CLIJMultiChannelImage featureStack = features.applyUseGpu(image, out);
-				ClearCLBuffer segmentationBuffer = prediction.segment(gpu, featureStack)
+				GpuImage segmentationBuffer = prediction.segment(gpu, featureStack)
 		)
 		{
 			CLIJCopy.copyToRai(segmentationBuffer, out);

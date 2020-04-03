@@ -1,6 +1,5 @@
 package clij;
 
-import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -22,16 +21,16 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testAdd() {
 		long[] dims = {2, 2};
-		ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
-		ClearCLBuffer b = gpu.push(ArrayImgs.floats(new float[]{5, 6, 7, 8}, dims));
-		ClearCLBuffer c = gpu.create(dims, NativeTypeEnum.Float);
+		GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
+		GpuImage b = gpu.push(ArrayImgs.floats(new float[]{5, 6, 7, 8}, dims));
+		GpuImage c = gpu.create(dims, NativeTypeEnum.Float);
 		add(a, b, c);
 		RandomAccessibleInterval<RealType<?>> result = gpu.pullRAI(c);
 		RandomAccessibleInterval<FloatType> expected = ArrayImgs.floats(new float[]{6, 8, 10, 12}, dims);
 		ImgLib2Assert.assertImageEqualsRealType(expected, result, 0.0);
 	}
 
-	private void add(ClearCLBuffer a, ClearCLBuffer b, ClearCLBuffer dst) {
+	private void add(GpuImage a, GpuImage b, GpuImage dst) {
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", a)
 				.addInput("b", b)
@@ -42,7 +41,7 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testSingleImageOperation() {
 		long[] dims = {2, 2};
-		ClearCLBuffer c = gpu.create(dims, NativeTypeEnum.Float);
+		GpuImage c = gpu.create(dims, NativeTypeEnum.Float);
 		CLIJLoopBuilder.gpu(gpu)
 				.addOutput("output", c)
 				.forEachPixel("output = 2.0");
@@ -54,8 +53,8 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testTwoImageOperation() {
 		long[] dims = {2, 2};
-		ClearCLBuffer c = gpu.create(dims, NativeTypeEnum.Byte);
-		ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
+		GpuImage c = gpu.create(dims, NativeTypeEnum.Byte);
+		GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("in", a)
 				.addOutput("out", c)
@@ -68,9 +67,9 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testMultipleOutputs() {
 		long[] dims = {2, 2};
-		ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
-		ClearCLBuffer b = gpu.create(dims, NativeTypeEnum.Float);
-		ClearCLBuffer c = gpu.create(dims, NativeTypeEnum.Float);
+		GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1, 2, 3, 4}, dims));
+		GpuImage b = gpu.create(dims, NativeTypeEnum.Float);
+		GpuImage c = gpu.create(dims, NativeTypeEnum.Float);
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", a)
 				.addOutput("b", b)
@@ -84,10 +83,10 @@ public class CLIJLoopBuilderTest {
 
 	@Test
 	public void testFourImages() {
-		ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1}, 1, 1));
-		ClearCLBuffer b = gpu.push(ArrayImgs.floats(new float[]{2}, 1, 1));
-		ClearCLBuffer c = gpu.push(ArrayImgs.floats(new float[]{3}, 1, 1));
-		ClearCLBuffer d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
+		GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1}, 1, 1));
+		GpuImage b = gpu.push(ArrayImgs.floats(new float[]{2}, 1, 1));
+		GpuImage c = gpu.push(ArrayImgs.floats(new float[]{3}, 1, 1));
+		GpuImage d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", a)
 				.addInput("b", b)
@@ -100,8 +99,8 @@ public class CLIJLoopBuilderTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testMismatchingDimensions() {
-		ClearCLBuffer c = gpu.create(new long[]{10, 10}, NativeTypeEnum.Float);
-		ClearCLBuffer b = gpu.create(new long[]{10, 11}, NativeTypeEnum.Float);
+		GpuImage c = gpu.create(new long[]{10, 10}, NativeTypeEnum.Float);
+		GpuImage b = gpu.create(new long[]{10, 11}, NativeTypeEnum.Float);
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("c", c)
 				.addInput("b", b)
@@ -110,7 +109,7 @@ public class CLIJLoopBuilderTest {
 
 	@Test
 	public void testVariable() {
-		ClearCLBuffer d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
+		GpuImage d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", 42)
 				.addOutput("d", d)
@@ -121,7 +120,7 @@ public class CLIJLoopBuilderTest {
 
 	@Test
 	public void testFloatVariable() {
-		ClearCLBuffer d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
+		GpuImage d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", 42f)
 				.addOutput("d", d)
@@ -133,7 +132,7 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testCLIJViewInput() {
 		CLIJView a = CLIJView.interval(gpu.push(ArrayImgs.floats(new float[]{0, 0, 0, 42}, 2, 2)), Intervals.createMinSize(1,1,1,1));
-		ClearCLBuffer d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
+		GpuImage d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", a)
 				.addOutput("d", d)
@@ -155,8 +154,8 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testDifference() {
 		try (
-				ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1,7,8}, 3, 1));
-				ClearCLBuffer o = gpu.create(new long[]{2, 1}, NativeTypeEnum.Float);
+				GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1,7,8}, 3, 1));
+				GpuImage o = gpu.create(new long[]{2, 1}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
 					.addInput("a", CLIJView.interval(a, Intervals.createMinSize(1, 0, 2, 1)))
@@ -171,9 +170,9 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void test3d() {
 		try(
-				ClearCLBuffer a = gpu.push(create3dImage(1));
-				ClearCLBuffer b = gpu.push(create3dImage(2));
-				ClearCLBuffer r = gpu.create(new long[]{21, 21, 21}, NativeTypeEnum.Float);
+				GpuImage a = gpu.push(create3dImage(1));
+				GpuImage b = gpu.push(create3dImage(2));
+				GpuImage r = gpu.create(new long[]{21, 21, 21}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
 					.addInput("a", CLIJView.wrap(a))
@@ -196,8 +195,8 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testSameImage() {
 		try (
-				ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1}, 1, 1));
-				ClearCLBuffer c = gpu.create(new long[]{1,  1}, NativeTypeEnum.Float);
+				GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1}, 1, 1));
+				GpuImage c = gpu.create(new long[]{1,  1}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
 					.addInput("a", a)
@@ -213,8 +212,8 @@ public class CLIJLoopBuilderTest {
 	@Test
 	public void testSameBufferCLIJView() {
 		try (
-				ClearCLBuffer a = gpu.push(ArrayImgs.floats(new float[]{1, 4}, 2, 1));
-				ClearCLBuffer c = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float);
+				GpuImage a = gpu.push(ArrayImgs.floats(new float[]{1, 4}, 2, 1));
+				GpuImage c = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
 					.addInput("a", CLIJView.interval(a, Intervals.createMinSize(0,0,1,1)))
@@ -234,14 +233,14 @@ public class CLIJLoopBuilderTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testIllegalVariableName2() {
-		try( ClearCLBuffer image = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float) ) {
+		try( GpuImage image = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float) ) {
 			CLIJLoopBuilder.gpu(gpu).addInput("float", image).forEachPixel("");
 		}
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testVariableNameClash() {
-		try( ClearCLBuffer image = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float) ) {
+		try( GpuImage image = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float) ) {
 			CLIJLoopBuilder.gpu(gpu).addInput("coordinate_x", image).forEachPixel("coordinate_x = 8");
 		}
 	}

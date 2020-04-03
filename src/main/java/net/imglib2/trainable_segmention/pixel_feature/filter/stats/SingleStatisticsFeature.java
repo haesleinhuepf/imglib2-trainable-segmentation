@@ -2,7 +2,7 @@
 package net.imglib2.trainable_segmention.pixel_feature.filter.stats;
 
 import clij.CLIJLoopBuilder;
-import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
+import clij.GpuImage;
 import clij.GpuApi;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.Interval;
@@ -157,8 +157,8 @@ public class SingleStatisticsFeature extends AbstractFeatureOp {
 		Interval interval = input.targetInterval();
 		CLIJView original = input.original(Intervals.expand(interval, border));
 		try(
-				ClearCLBuffer inputBuffer = copyView(gpu, original);
-				ClearCLBuffer tmp = gpu.create(inputBuffer.getDimensions(), NativeTypeEnum.Float);
+				GpuImage inputBuffer = copyView(gpu, original);
+				GpuImage tmp = gpu.create(inputBuffer.getDimensions(), NativeTypeEnum.Float);
 		)
 		{
 			if(min) {
@@ -173,21 +173,21 @@ public class SingleStatisticsFeature extends AbstractFeatureOp {
 		}
 	}
 
-	private void min(GpuApi gpu, ClearCLBuffer inputBuffer, ClearCLBuffer tmp, long[] border) {
+	private void min(GpuApi gpu, GpuImage inputBuffer, GpuImage tmp, long[] border) {
 		if (border.length == 2)
 			gpu.minimum2DBox(inputBuffer, tmp, border[0], border[1]);
 		else
 			gpu.minimum3DBox(inputBuffer, tmp, border[0], border[1], border[2]);
 	}
 
-	private void max(GpuApi gpu, ClearCLBuffer input, ClearCLBuffer output, long[] border) {
+	private void max(GpuApi gpu, GpuImage input, GpuImage output, long[] border) {
 		if (border.length == 2)
 			gpu.maximum2DBox(input, output, border[0], border[1]);
 		else
 			gpu.maximum3DBox(input, output, border[0], border[1], border[2]);
 	}
 
-	private void calculateMeanAndVariance(GpuApi gpu, long[] border, Iterator<CLIJView> iterator, ClearCLBuffer inputBuffer, ClearCLBuffer tmp) {
+	private void calculateMeanAndVariance(GpuApi gpu, long[] border, Iterator<CLIJView> iterator, GpuImage inputBuffer, GpuImage tmp) {
 		if(!mean && !variance)
 			return;
 		calculateMean(gpu, inputBuffer, tmp, border);
@@ -197,17 +197,17 @@ public class SingleStatisticsFeature extends AbstractFeatureOp {
 			calculateVariance(gpu, border, inputBuffer, tmp, iterator.next());
 	}
 
-	private void calculateMean(GpuApi gpu, ClearCLBuffer input, ClearCLBuffer output, long[] border) {
+	private void calculateMean(GpuApi gpu, GpuImage input, GpuImage output, long[] border) {
 		if(border.length == 2)
 			gpu.mean2DBox(input, output, border[0], border[1]);
 		else
 			gpu.mean3DBox(input, output, border[0], border[1], border[2]);
 	}
 
-	private void calculateVariance(GpuApi gpu, long[] border, ClearCLBuffer input, ClearCLBuffer mean, CLIJView variance) {
+	private void calculateVariance(GpuApi gpu, long[] border, GpuImage input, GpuImage mean, CLIJView variance) {
 		try (
-				ClearCLBuffer squared = gpu.create(input.getDimensions(), NativeTypeEnum.Float);
-				ClearCLBuffer meanOfSquared = gpu.create(input.getDimensions(), NativeTypeEnum.Float);
+				GpuImage squared = gpu.create(input.getDimensions(), NativeTypeEnum.Float);
+				GpuImage meanOfSquared = gpu.create(input.getDimensions(), NativeTypeEnum.Float);
 		) {
 			square(gpu, input, squared);
 			calculateMean(gpu, squared, meanOfSquared, border);
@@ -225,12 +225,12 @@ public class SingleStatisticsFeature extends AbstractFeatureOp {
 		}
 	}
 
-	private void square(GpuApi gpu, ClearCLBuffer inputBuffer, ClearCLBuffer tmp2) {
+	private void square(GpuApi gpu, GpuImage inputBuffer, GpuImage tmp2) {
 		CLIJLoopBuilder.gpu(gpu).addInput("a", inputBuffer).addOutput("b", tmp2)
 				.forEachPixel("b = a * a");
 	}
-	private ClearCLBuffer copyView(GpuApi gpu, CLIJView inputClBuffer) {
-		ClearCLBuffer buffer = gpu.create(Intervals.dimensionsAsLongArray(inputClBuffer.interval()), NativeTypeEnum.Float);
+	private GpuImage copyView(GpuApi gpu, CLIJView inputClBuffer) {
+		GpuImage buffer = gpu.create(Intervals.dimensionsAsLongArray(inputClBuffer.interval()), NativeTypeEnum.Float);
 		CLIJCopy.copy(gpu, inputClBuffer, CLIJView.wrap(buffer));
 		return buffer;
 	}

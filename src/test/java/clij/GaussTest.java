@@ -1,6 +1,5 @@
 package clij;
 
-import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -28,8 +27,8 @@ public class GaussTest {
 		NeighborhoodOperation operation = Gauss.gauss(gpu, 2, 2, 2);
 		Interval inputInterval = operation.getRequiredInputInterval(targetInterval);
 		try(
-				ClearCLBuffer input = gpu.push(Views.interval(dirac, inputInterval));
-				ClearCLBuffer output = gpu.create(Intervals.dimensionsAsLongArray(targetInterval), NativeTypeEnum.Float);
+				GpuImage input = gpu.push(Views.interval(dirac, inputInterval));
+				GpuImage output = gpu.create(Intervals.dimensionsAsLongArray(targetInterval), NativeTypeEnum.Float);
 		) {
 			operation.convolve(CLIJView.wrap(input), CLIJView.wrap(output));
 			RandomAccessibleInterval<FloatType> rai = gpu.pullRAI(output);

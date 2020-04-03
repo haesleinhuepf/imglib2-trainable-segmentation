@@ -2,7 +2,7 @@ package net.imglib2.trainable_segmention.clij_random_forest.compute_cache;
 
 import clij.Gauss;
 import clij.NeighborhoodOperation;
-import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
+import clij.GpuImage;
 import clij.GpuApi;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.Interval;
@@ -46,10 +46,10 @@ public class GaussContent implements ComputeCache.Content {
 	}
 
 	@Override
-	public ClearCLBuffer load(Interval interval) {
+	public GpuImage load(Interval interval) {
 		GpuApi gpu = cache.gpuApi();
 		CLIJView original = cache.get(source, operation.getRequiredInputInterval(interval));
-		ClearCLBuffer output = gpu.create(Intervals.dimensionsAsLongArray(interval), NativeTypeEnum.Float);
+		GpuImage output = gpu.create(Intervals.dimensionsAsLongArray(interval), NativeTypeEnum.Float);
 		operation.convolve(original, CLIJView.wrap(output));
 		return output;
 	}
