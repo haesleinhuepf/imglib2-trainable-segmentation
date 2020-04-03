@@ -50,7 +50,7 @@ public class Segmenter {
 
 	private weka.classifiers.Classifier classifier;
 
-	private boolean useGpu = false;
+	private GpuApi gpu = null;
 
 	private Segmenter(List<String> classNames, FeatureCalculator features,
 			Classifier classifier)
@@ -67,8 +67,8 @@ public class Segmenter {
 	}
 
 	public void setUseGpu(boolean useGpu) {
-		this.useGpu = useGpu;
-		features().setUseGPU(useGpu);
+		this.gpu = useGpu ? GpuApi.getInstance() : null;
+		features().setGpu(gpu);
 	}
 
 	public FeatureCalculator features() {
@@ -104,7 +104,7 @@ public class Segmenter {
 	{
 		Objects.requireNonNull(out);
 		Objects.requireNonNull(image);
-		if (useGpu)
+		if (gpu != null)
 			segmentGpu(image, out);
 		else
 			segmentCpu(image, out);
@@ -124,7 +124,6 @@ public class Segmenter {
 
 	private void segmentGpu(RandomAccessible<?> image, RandomAccessibleInterval<? extends IntegerType<?>> out) {
 		RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
-		GpuApi gpu = GpuApi.getInstance();
 		try(
 				CLIJMultiChannelImage featureStack = features.applyUseGpu(image, out);
 				ClearCLBuffer segmentationBuffer = prediction.segment(gpu, featureStack)
@@ -150,7 +149,7 @@ public class Segmenter {
 	{
 		Objects.requireNonNull(out);
 		Objects.requireNonNull(image);
-		if (useGpu)
+		if (gpu != null)
 			predictGpu(out, image);
 		else
 			predictCpu(out, image);
@@ -174,7 +173,6 @@ public class Segmenter {
 	}
 
 	private void predictGpu(RandomAccessibleInterval<? extends RealType<?>> out, RandomAccessible<?> image) {
-		GpuApi gpu = GpuApi.getInstance();
 		Interval interval = RevampUtils.removeLastDimension(out);
 		RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
 		try(
