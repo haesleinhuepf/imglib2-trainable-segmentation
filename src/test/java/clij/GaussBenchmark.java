@@ -4,12 +4,12 @@ import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.clearcl.enums.HostAccessType;
 import net.haesleinhuepf.clij.clearcl.enums.KernelAccessType;
 import net.haesleinhuepf.clij.clearcl.enums.MemAllocMode;
+import net.haesleinhuepf.clij.converters.implementations.RandomAccessibleIntervalToClearCLBufferConverter;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.haesleinhuepf.clij2.CLIJ2;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.test.RandomImgs;
 import net.imglib2.trainable_segmention.Utils;
@@ -32,10 +32,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import preview.net.imglib2.algorithm.convolution.kernel.Kernel1D;
 import preview.net.imglib2.algorithm.gauss3.Gauss3;
 
-import java.nio.FloatBuffer;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.DoubleStream;
 
 @Fork(1)
 @Warmup(iterations = 10, time = 100, timeUnit = TimeUnit.MILLISECONDS)
@@ -44,6 +41,7 @@ import java.util.stream.DoubleStream;
 public class GaussBenchmark {
 
 	private final CLIJ2 clij = CLIJ2.getInstance();
+	private final ClearCLBufferReuse buffers = new ClearCLBufferReuse(clij);
 
 	private final FinalInterval interval = new FinalInterval(64, 64, 64);
 	private final ClearCLBuffer inputBuffer = clij.push(RandomImgs.seed(1).nextImage(new FloatType(), interval));
@@ -59,6 +57,7 @@ public class GaussBenchmark {
 
 	@Setup
 	public void setUp() {
+		clij.setKeepReferences(false);
 		content.request(interval);
 	}
 
@@ -71,11 +70,7 @@ public class GaussBenchmark {
 		tmp2.close();
 		kernel.close();
 		clij.clear();
-	}
-
-	@Benchmark
-	public RandomAccessibleInterval benchmarkGauss() {
-		return clij.pullRAI(content.load(interval));
+		buffers.close();
 	}
 
 	@Benchmark
@@ -85,28 +80,50 @@ public class GaussBenchmark {
 	}
 
 	@Benchmark
-	public RandomAccessibleInterval compare() {
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(inputBuffer2), kernel, CLIJView.wrap(tmp1), 0);
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp1), kernel, CLIJView.wrap(tmp2), 1);
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp2), kernel, CLIJView.wrap(output), 2);
-		return clij.pullRAI(output);
+	public RandomAccessibleInterval benchmarkGauss() {
+		try(ClearCLBuffer load = content.load(interval) ) {
+			return clij.pullRAI(load);
+		}
 	}
 
 	@Benchmark
-	public RandomAccessibleInterval compare2() {
-		ClearCLBuffer tmp1 = clij.create(64, large, large);
-		ClearCLBuffer tmp2 = clij.create(64, 64, large);
-		ClearCLBuffer kernel1 = gaussKernel(8);
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(inputBuffer2), kernel1, CLIJView.wrap(tmp1), 0);
-		ClearCLBuffer kernel2 = gaussKernel(8);
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp1), kernel2, CLIJView.wrap(tmp2), 1);
-		ClearCLBuffer kernel3 = gaussKernel(8);
-		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp2), kernel3, CLIJView.wrap(output), 2);
-		tmp1.close();
-		tmp2.close();
-		kernel1.close();
-		kernel2.close();
-		kernel2.close();
+	public RandomAccessibleInterval intermediate() {
+		try(ClearCLBuffer output = clij.create(64, 64, 64))
+		{
+			NeighborhoodOperation gauss = Gauss.gauss(clij, 8, 8, 8);
+			gauss.convolve(CLIJView.wrap(inputBuffer2), CLIJView.wrap(output));
+			return clij.pullRAI(output);
+		}
+	}
+
+	@Benchmark
+	public RandomAccessibleInterval lowLevelGauss() {
+		try(ReuseScope scope = new ReuseScope(buffers))
+		{
+			ClearCLBuffer tmp1 = scope.create(64, large, large);
+			ClearCLBuffer tmp2 = scope.create(64, 64, large);
+			ClearCLBuffer output = scope.create(64, 64, 64);
+			{
+				ClearCLBuffer kernel = scope.add(gaussKernel(8));
+				CLIJKernelConvolution.convolve(clij, CLIJView.wrap(inputBuffer2), kernel, CLIJView.wrap(tmp1), 0);
+			}
+			{
+				ClearCLBuffer kernel = scope.add(gaussKernel(8));
+				CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp1), kernel, CLIJView.wrap(tmp2), 1);
+			}
+			{
+				ClearCLBuffer kernel = scope.add(gaussKernel(8));
+				CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp2), kernel, CLIJView.wrap(output), 2);
+			}
+			return clij.pullRAI(output);
+		}
+	}
+
+	@Benchmark
+	public RandomAccessibleInterval lowLevelGaussReuseBuffers() {
+		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(inputBuffer2), kernel, CLIJView.wrap(tmp1), 0);
+		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp1), kernel, CLIJView.wrap(tmp2), 1);
+		CLIJKernelConvolution.convolve(clij, CLIJView.wrap(tmp2), kernel, CLIJView.wrap(output), 2);
 		return clij.pullRAI(output);
 	}
 
@@ -117,10 +134,11 @@ public class GaussBenchmark {
 
 	private ClearCLBuffer gaussKernel(double sigma) {
 		double[] fullKernel =  Kernel1D.symmetric(Gauss3.halfkernels(new double[] {sigma})[0]).fullKernel();
-		float[] kernel = new float[fullKernel.length];
-		for (int i = 0; i < kernel.length; i++) kernel[i] = (float) fullKernel[i];
-		ClearCLBuffer buffer = clij.getCLIJ().getClearCLContext().createBuffer(MemAllocMode.AllocateHostPointer, HostAccessType.WriteOnly, KernelAccessType.ReadOnly, 1, NativeTypeEnum.Float, new long[]{kernel.length});
-		buffer.readFrom(FloatBuffer.wrap(kernel), true);
+		ClearCLBuffer buffer = buffers.create(new long[]{fullKernel.length});
+		RandomAccessibleIntervalToClearCLBufferConverter.copyRandomAccessibleIntervalToClearCLBuffer(
+				ArrayImgs.doubles(fullKernel, fullKernel.length, 1),
+				buffer
+		);
 		return buffer;
 	}
 
