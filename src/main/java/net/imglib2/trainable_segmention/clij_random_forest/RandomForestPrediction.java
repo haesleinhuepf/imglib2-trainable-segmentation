@@ -4,7 +4,7 @@ package net.imglib2.trainable_segmention.clij_random_forest;
 import hr.irb.fastRandomForest.FastRandomForest;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
-import net.haesleinhuepf.clij2.CLIJ2;
+import clij.GpuApi;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.trainable_segmention.classification.CompositeInstance;
@@ -96,26 +96,26 @@ public class RandomForestPrediction {
 			distribution[k] += leafProbabilities[(tree * numberOfLeafs + leaf) * numberOfClasses + k];
 	}
 
-	public void distribution(CLIJ2 clij, CLIJMultiChannelImage features, CLIJMultiChannelImage distribution) {
+	public void distribution(GpuApi gpu, CLIJMultiChannelImage features, CLIJMultiChannelImage distribution) {
 		Img<UnsignedShortType> indices = ArrayImgs.unsignedShorts(nodeIndices, 3, numberOfNodes, numberOfTrees);
 		Img<FloatType> thresholds = ArrayImgs.floats(nodeThresholds, 1, numberOfNodes, numberOfTrees);
 		Img<FloatType> probabilities = ArrayImgs.floats(leafProbabilities, numberOfClasses, numberOfLeafs, numberOfTrees);
 		try (
-				ClearCLBuffer thresholdsClBuffer = clij.push(thresholds);
-				ClearCLBuffer probabilitiesClBuffer = clij.push(probabilities);
-				ClearCLBuffer indicesClBuffer = clij.push(indices);
+				ClearCLBuffer thresholdsClBuffer = gpu.push(thresholds);
+				ClearCLBuffer probabilitiesClBuffer = gpu.push(probabilities);
+				ClearCLBuffer indicesClBuffer = gpu.push(indices);
 		) {
-			CLIJRandomForestKernel.randomForest(clij, distribution, features,
+			CLIJRandomForestKernel.randomForest(gpu, distribution, features,
 					thresholdsClBuffer, probabilitiesClBuffer, indicesClBuffer, numberOfFeatures );
 		}
 	}
 
-	public ClearCLBuffer segment(CLIJ2 clij, CLIJMultiChannelImage features) {
-		try(CLIJMultiChannelImage distribution = new CLIJMultiChannelImage(clij, features.getSpatialDimensions(), numberOfClasses))
+	public ClearCLBuffer segment(GpuApi gpu, CLIJMultiChannelImage features) {
+		try(CLIJMultiChannelImage distribution = new CLIJMultiChannelImage(gpu, features.getSpatialDimensions(), numberOfClasses))
 		{
-			distribution(clij, features, distribution);
-			ClearCLBuffer output = clij.create(distribution.getSpatialDimensions(), NativeTypeEnum.UnsignedShort);
-			CLIJRandomForestKernel.findMax(clij, distribution, output);
+			distribution(gpu, features, distribution);
+			ClearCLBuffer output = gpu.create(distribution.getSpatialDimensions(), NativeTypeEnum.UnsignedShort);
+			CLIJRandomForestKernel.findMax(gpu, distribution, output);
 			return output;
 		}
 	}
