@@ -27,7 +27,7 @@ public class CLIJFeatureInput implements AutoCloseable {
 		cache.request(new OriginalContent(cache), interval);
 	}
 
-	public CLIJView original(Interval interval) {
+	public GpuView original(Interval interval) {
 		return cache.get(new OriginalContent(cache), interval);
 	}
 
@@ -35,7 +35,7 @@ public class CLIJFeatureInput implements AutoCloseable {
 		cache.request(gaussKey(sigma), interval);
 	}
 
-	public CLIJView gauss(double sigma, Interval interval) {
+	public GpuView gauss(double sigma, Interval interval) {
 		return cache.get(gaussKey(sigma), interval);
 	}
 
@@ -43,7 +43,7 @@ public class CLIJFeatureInput implements AutoCloseable {
 		cache.request(new DerivativeContent(cache, gaussKey(sigma), dimension), interval);
 	}
 
-	public CLIJView derivative(double sigma, int dimension, Interval interval) {
+	public GpuView derivative(double sigma, int dimension, Interval interval) {
 		return cache.get(new DerivativeContent(cache, gaussKey(sigma), dimension), interval);
 	}
 
@@ -51,7 +51,7 @@ public class CLIJFeatureInput implements AutoCloseable {
 		cache.request(secondDerivativeKey(sigma, dimensionA, dimensionB), interval);
 	}
 
-	public CLIJView secondDerivative(double sigma, int dimensionA, int dimensionB, Interval interval) {
+	public GpuView secondDerivative(double sigma, int dimensionA, int dimensionB, Interval interval) {
 		return cache.get(secondDerivativeKey(sigma, dimensionA, dimensionB), interval);
 	}
 
