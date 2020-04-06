@@ -1,6 +1,5 @@
 package performance;
 
-import clij.GpuApi;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccess;
