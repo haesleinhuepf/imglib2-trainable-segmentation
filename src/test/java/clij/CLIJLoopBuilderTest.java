@@ -6,6 +6,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.test.ImgLib2Assert;
 import net.imglib2.trainable_segmention.clij_random_forest.GpuView;
+import net.imglib2.trainable_segmention.clij_random_forest.GpuViews;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
@@ -131,7 +132,7 @@ public class CLIJLoopBuilderTest {
 
 	@Test
 	public void testCLIJViewInput() {
-		GpuView a = GpuView.interval(gpu.push(ArrayImgs.floats(new float[]{0, 0, 0, 42}, 2, 2)), Intervals.createMinSize(1,1,1,1));
+		GpuView a = GpuViews.crop(gpu.push(ArrayImgs.floats(new float[]{0, 0, 0, 42}, 2, 2)), Intervals.createMinSize(1,1,1,1));
 		GpuImage d = gpu.push(ArrayImgs.floats(new float[]{0}, 1, 1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addInput("a", a)
@@ -143,11 +144,11 @@ public class CLIJLoopBuilderTest {
 
 	@Test
 	public void testCLIJViewOutput() {
-		GpuView a = GpuView.interval(gpu.create(new long[]{2, 2}, NativeTypeEnum.Float), Intervals.createMinSize(1,1,1,1));
+		GpuView a = GpuViews.crop(gpu.create(new long[]{2, 2}, NativeTypeEnum.Float), Intervals.createMinSize(1,1,1,1));
 		CLIJLoopBuilder.gpu(gpu)
 				.addOutput("a", a)
 				.forEachPixel("a = 42");
-		RandomAccessibleInterval<FloatType> result = gpu.pullRAI(a.buffer());
+		RandomAccessibleInterval<FloatType> result = gpu.pullRAI(a.source());
 		ImgLib2Assert.assertImageEqualsRealType(ArrayImgs.floats(new float[]{0,0,0,42}, 2, 2), result, 0.0);
 	}
 
@@ -158,8 +159,8 @@ public class CLIJLoopBuilderTest {
 				GpuImage o = gpu.create(new long[]{2, 1}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
-					.addInput("a", GpuView.interval(a, Intervals.createMinSize(1, 0, 2, 1)))
-					.addInput("b", GpuView.interval(a, Intervals.createMinSize(0, 0, 2, 1)))
+					.addInput("a", GpuViews.crop(a, Intervals.createMinSize(1, 0, 2, 1)))
+					.addInput("b", GpuViews.crop(a, Intervals.createMinSize(0, 0, 2, 1)))
 					.addOutput("c", o)
 					.forEachPixel("c = a - b");
 			RandomAccessibleInterval<FloatType> result = gpu.pullRAI(o);
@@ -175,9 +176,9 @@ public class CLIJLoopBuilderTest {
 				GpuImage r = gpu.create(new long[]{21, 21, 21}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
-					.addInput("a", GpuView.wrap(a))
-					.addInput("b", GpuView.wrap(b))
-					.addOutput("r", GpuView.wrap(r))
+					.addInput("a", GpuViews.wrap(a))
+					.addInput("b", GpuViews.wrap(b))
+					.addOutput("r", GpuViews.wrap(r))
 					.forEachPixel("r = a - b");
 			ImgLib2Assert.assertImageEqualsRealType(create3dImage(-1), gpu.pullRAI(r), 0);
 		}
@@ -216,8 +217,8 @@ public class CLIJLoopBuilderTest {
 				GpuImage c = gpu.create(new long[]{1, 1}, NativeTypeEnum.Float);
 		) {
 			CLIJLoopBuilder.gpu(gpu)
-					.addInput("a", GpuView.interval(a, Intervals.createMinSize(0,0,1,1)))
-					.addInput( "b", GpuView.interval(a, Intervals.createMinSize(1,0,1,1)))
+					.addInput("a", GpuViews.crop(a, Intervals.createMinSize(0,0,1,1)))
+					.addInput( "b", GpuViews.crop(a, Intervals.createMinSize(1,0,1,1)))
 					.addOutput("c", c)
 					.forEachPixel("c = a + b");
 			RandomAccessibleInterval<FloatType> result = gpu.pullRAI(c);

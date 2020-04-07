@@ -7,6 +7,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.test.ImgLib2Assert;
 import net.imglib2.trainable_segmention.clij_random_forest.GpuView;
+import net.imglib2.trainable_segmention.clij_random_forest.GpuViews;
 import net.imglib2.trainable_segmention.utils.ToString;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
@@ -30,8 +31,8 @@ public class ConcatenatedNeighborhoodOperationTest {
 				0,0,0,0,0,
 				0,0,0,0,0
 		}, 5, 5);
-		GpuView input = GpuView.wrap(gpu.push(dirac));
-		GpuView output = GpuView.wrap(gpu.create(new long[]{3, 3}, NativeTypeEnum.Float));
+		GpuView input = GpuViews.wrap(gpu.push(dirac));
+		GpuView output = GpuViews.wrap(gpu.create(new long[]{3, 3}, NativeTypeEnum.Float));
 		CLIJKernelConvolution a = new CLIJKernelConvolution(gpu, Kernel1D.centralAsymmetric(1, 0, -1), 0);
 		CLIJKernelConvolution b = new CLIJKernelConvolution(gpu, Kernel1D.centralAsymmetric(1, 2, 1), 1);
 		ConcatenatedNeighborhoodOperation concatenation = new ConcatenatedNeighborhoodOperation(gpu, Arrays.asList(a, b));
@@ -39,7 +40,7 @@ public class ConcatenatedNeighborhoodOperationTest {
 		Interval expectedInterval = Intervals.createMinMax(-2, -2, 2, 2);
 		ImgLib2Assert.assertIntervalEquals(expectedInterval, inputInterval);
 		concatenation.convolve(input, output);
-		RandomAccessibleInterval<FloatType> rai = gpu.pullRAI(output.buffer());
+		RandomAccessibleInterval<FloatType> rai = gpu.pullRAI(output.source());
 		ToString.print(rai);
 	}
 }
