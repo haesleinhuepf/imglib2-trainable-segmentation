@@ -7,13 +7,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 /**
- * Tests {@link AutoClose}.
+ * Tests {@link Scope}.
  */
 public class AutoCloseTest {
 
 	@Test
 	public void testCreate() {
-		try (AutoClose list = new AutoClose()) {
+		try (Scope list = new Scope()) {
 
 		}
 	}
@@ -21,8 +21,8 @@ public class AutoCloseTest {
 	@Test
 	public void testClose() {
 		boolean[] closed = {false};
-		AutoClose list = new AutoClose();
-		list.add(() -> closed[0] = true);
+		Scope list = new Scope();
+		list.register(() -> closed[0] = true);
 		assertFalse(closed[0]);
 		list.close();
 		assertTrue(closed[0]);
@@ -31,11 +31,11 @@ public class AutoCloseTest {
 	@Test
 	public void testException() {
 		String message = null;
-		try (AutoClose list = new AutoClose()) {
-			list.add(() -> {});
-			list.add(() -> { throw new RuntimeException("a"); });
-			list.add(() -> { throw new RuntimeException("b"); });
-			list.add(() -> {});
+		try (Scope list = new Scope()) {
+			list.register(() -> {});
+			list.register(() -> { throw new RuntimeException("a"); });
+			list.register(() -> { throw new RuntimeException("b"); });
+			list.register(() -> {});
 		} catch( RuntimeException e ) {
 			message = e.getMessage();
 		}
