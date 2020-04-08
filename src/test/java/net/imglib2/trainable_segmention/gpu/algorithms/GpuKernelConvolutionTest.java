@@ -29,7 +29,7 @@ public class GpuKernelConvolutionTest {
 				GpuImage kernel = gpu.push(img1D(-0.5f, 0, 0.5f));
 				GpuImage output = gpu.create(new long[]{3, 1}, NativeTypeEnum.Float);
 		) {
-			GpuKernelConvolution.convolve(gpu, GpuViews.wrap(input), kernel, GpuViews.wrap(output), 0);
+			GpuKernelConvolution.convolve(gpu, kernel, GpuViews.wrap(input), GpuViews.wrap(output), 0);
 			ImgLib2Assert.assertImageEqualsRealType(img1D(0.5f, 0, -0.5f), gpu.pullRAI(output), 0);
 		}
 	}
@@ -41,7 +41,7 @@ public class GpuKernelConvolutionTest {
 				GpuImage kernel = gpu.push(img1D(-0.5f, 0, 0.5f));
 				GpuImage output = gpu.create(new long[]{3, 1}, NativeTypeEnum.Float);
 		) {
-			GpuKernelConvolution.convolve(gpu, input, kernel, 1, output, 0);
+			GpuSeparableOperation.convolve(gpu, kernel, input, 1, output, 0);
 			RandomAccessibleInterval actual = gpu.pullRAI(output);
 			ToString.print(actual);
 			ImgLib2Assert.assertImageEqualsRealType(img1D(0.5f, 0, -0.5f), actual, 0);
@@ -55,7 +55,7 @@ public class GpuKernelConvolutionTest {
 				GpuImage kernel = gpu.push(img1D(-0.5f, 0, 0.5f));
 				GpuImage output = gpu.create(new long[]{3, 1}, NativeTypeEnum.Float);
 		) {
-			GpuKernelConvolution.convolve(gpu, GpuViews.wrap(input), kernel, GpuViews.wrap(output), 0);
+			GpuKernelConvolution.convolve(gpu, kernel, GpuViews.wrap(input), GpuViews.wrap(output), 0);
 			ImgLib2Assert.assertImageEqualsRealType(img1D(-1, 0, 1.5f), gpu.pullRAI(output), 0);
 		}
 	}
@@ -69,7 +69,7 @@ public class GpuKernelConvolutionTest {
 				GpuImage kernel = gpu.push(img1D(-0.5f, 0, 0.5f));
 				GpuImage output = gpu.create(new long[]{length, 1}, NativeTypeEnum.Float);
 		) {
-			GpuKernelConvolution.convolve(gpu, GpuViews.wrap(input), kernel, GpuViews.wrap(output), 0);
+			GpuKernelConvolution.convolve(gpu, kernel, GpuViews.wrap(input), GpuViews.wrap(output), 0);
 			ImgLib2Assert.assertImageEqualsRealType(img1D(new float[length]), gpu.pullRAI(output), 0);
 		}
 	}
@@ -85,7 +85,7 @@ public class GpuKernelConvolutionTest {
 				GpuImage kernel = gpu.push(img1D(1, 2));
 				GpuImage output = gpu.create(new long[]{3, 2}, NativeTypeEnum.Float);
 		) {
-			GpuKernelConvolution.convolve(gpu, GpuViews.crop(input, FinalInterval.createMinSize(1,0,2,2)), kernel, GpuViews.wrap(output), 1);
+			GpuKernelConvolution.convolve(gpu, kernel, GpuViews.crop(input, FinalInterval.createMinSize(1,0,2,2)), GpuViews.wrap(output), 1);
 			RandomAccessibleInterval actual = gpu.pullRAI(output);
 			ImgLib2Assert.assertImageEqualsRealType(ArrayImgs.floats(new float[]{
 					2, 0, 0,
