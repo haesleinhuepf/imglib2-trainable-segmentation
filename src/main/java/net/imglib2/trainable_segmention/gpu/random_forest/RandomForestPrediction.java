@@ -105,7 +105,7 @@ public class RandomForestPrediction {
 				GpuImage probabilitiesClBuffer = gpu.push(probabilities);
 				GpuImage indicesClBuffer = gpu.push(indices);
 		) {
-			CLIJRandomForestKernel.randomForest(gpu, distribution, features,
+			GpuRandomForestKernel.randomForest(gpu, distribution, features,
 					thresholdsClBuffer, probabilitiesClBuffer, indicesClBuffer, numberOfFeatures );
 		}
 	}
@@ -115,7 +115,7 @@ public class RandomForestPrediction {
 		{
 			distribution(gpu, features, distribution);
 			GpuImage output = gpu.create(distribution.getDimensions(), NativeTypeEnum.UnsignedShort);
-			CLIJRandomForestKernel.findMax(gpu, distribution, output);
+			GpuRandomForestKernel.findMax(gpu, distribution, output);
 			return output;
 		}
 	}

@@ -1,18 +1,18 @@
 
 package net.imglib2.trainable_segmention.pixel_feature.filter.structure;
 
-import net.imglib2.trainable_segmention.gpu.algorithms.CLIJEigenvalues;
-import net.imglib2.trainable_segmention.gpu.api.CLIJLoopBuilder;
-import net.imglib2.trainable_segmention.gpu.algorithms.Gauss;
+import net.imglib2.trainable_segmention.gpu.algorithms.GpuEigenvalues;
+import net.imglib2.trainable_segmention.gpu.api.GpuPixelWiseOperation;
+import net.imglib2.trainable_segmention.gpu.algorithms.GpuGauss;
 import net.imglib2.trainable_segmention.gpu.api.GpuImage;
-import net.imglib2.trainable_segmention.gpu.algorithms.NeighborhoodOperation;
+import net.imglib2.trainable_segmention.gpu.algorithms.GpuNeighborhoodOperation;
 import net.imglib2.trainable_segmention.gpu.api.GpuApi;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.Interval;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.linalg.eigen.EigenValues;
-import net.imglib2.trainable_segmention.gpu.CLIJFeatureInput;
+import net.imglib2.trainable_segmention.gpu.GpuFeatureInput;
 import net.imglib2.trainable_segmention.gpu.api.GpuView;
 import net.imglib2.trainable_segmention.gpu.api.GpuViews;
 import net.imglib2.trainable_segmention.pixel_feature.filter.FeatureOp;
@@ -176,7 +176,7 @@ public class SingleStructureTensorEigenvaluesFeature extends AbstractFeatureOp {
 
 
 	@Override
-	public void prefetch(CLIJFeatureInput input) {
+	public void prefetch(GpuFeatureInput input) {
 		double[] integrationSigma = globalSettings().pixelSize().stream().mapToDouble(p -> integrationScale / p).toArray();
 		double[] gaussSigma = globalSettings().pixelSize().stream().mapToDouble(p -> sigma / p).toArray();
 		long[] border = DoubleStream.of(integrationSigma).mapToLong(sigma -> (long)(4 * sigma)).toArray();
@@ -186,20 +186,20 @@ public class SingleStructureTensorEigenvaluesFeature extends AbstractFeatureOp {
 	}
 
 	@Override
-	public void apply(CLIJFeatureInput input, List<GpuView> output) {
+	public void apply(GpuFeatureInput input, List<GpuView> output) {
 		double[] integrationSigma = globalSettings().pixelSize().stream().mapToDouble(p -> integrationScale / p).toArray();
-		NeighborhoodOperation integrationGauss = Gauss.gauss(input.gpuApi(), integrationSigma);
+		GpuNeighborhoodOperation integrationGauss = GpuGauss.gauss(input.gpuApi(), integrationSigma);
 		Interval border = integrationGauss.getRequiredInputInterval(input.targetInterval());
 		List<GpuView> derivatives = derivatives(input, border);
 		try (
 				GpuImage products = products(input.gpuApi(), derivatives);
 				GpuImage blurredProducts = blur(input.gpuApi(), GpuViews.channels(products), integrationGauss, input.targetInterval());
 		) {
-			CLIJEigenvalues.symmetric(input.gpuApi(), GpuViews.channels(blurredProducts), output);
+			GpuEigenvalues.symmetric(input.gpuApi(), GpuViews.channels(blurredProducts), output);
 		}
 	}
 
-	private List<GpuView> derivatives(CLIJFeatureInput input, Interval derivativeInterval) {
+	private List<GpuView> derivatives(GpuFeatureInput input, Interval derivativeInterval) {
 		double[] gaussSigma = globalSettings().pixelSize().stream().mapToDouble(p -> sigma / p).toArray();
 		int n = globalSettings().numDimensions();
 		List<GpuView> derivatives = new ArrayList<>(3);
@@ -212,7 +212,7 @@ public class SingleStructureTensorEigenvaluesFeature extends AbstractFeatureOp {
 		int n = derivatives.size();
 		int numProducts = n * (n + 1) / 2;
 		long[] dimensions = Intervals.dimensionsAsLongArray(derivatives.get(0).dimensions());
-		CLIJLoopBuilder loopBuilder = CLIJLoopBuilder.gpu(gpu);
+		GpuPixelWiseOperation loopBuilder = GpuPixelWiseOperation.gpu(gpu);
 		StringJoiner operation = new StringJoiner("; ");
 		for (int i = 0; i < derivatives.size(); i++)
 			loopBuilder.addInput("derivative" + i, derivatives.get(i));
@@ -227,7 +227,7 @@ public class SingleStructureTensorEigenvaluesFeature extends AbstractFeatureOp {
 		return products;
 	}
 
-	private GpuImage blur(GpuApi gpu, List<GpuView> products, NeighborhoodOperation integrationGauss, Interval targertInteval) {
+	private GpuImage blur(GpuApi gpu, List<GpuView> products, GpuNeighborhoodOperation integrationGauss, Interval targertInteval) {
 		long[] dimensions = Intervals.dimensionsAsLongArray(targertInteval);
 		GpuImage blurred = gpu.create(dimensions, products.size(), NativeTypeEnum.Float);
 		List<GpuView> blurredChannels = GpuViews.channels(blurred);
