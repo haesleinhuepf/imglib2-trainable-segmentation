@@ -5,7 +5,6 @@ import net.imagej.ImgPlus;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.VirtualStackAdapter;
-import net.imglib2.trainable_segmention.clij_random_forest.CLIJMultiChannelImage;
 import net.imglib2.trainable_segmention.Utils;
 import net.imglib2.trainable_segmention.pixel_feature.calculator.FeatureCalculator;
 import net.imglib2.trainable_segmention.pixel_feature.filter.SingleFeatures;
@@ -41,9 +40,9 @@ public class CLIJFeatureCalculatorTest {
 			.build();
 		calculator.setGpu(gpu);
 		FinalInterval interval = Intervals.expand(input, -40);
-		try(CLIJMultiChannelImage featureStack = calculator.applyUseGpu(Views.extendBorder(input), interval))
+		try(GpuImage featureStack = calculator.applyUseGpu(Views.extendBorder(input), interval))
 		{
-			RandomAccessibleInterval<FloatType> result = featureStack.asRAI();
+			RandomAccessibleInterval<FloatType> result = gpu.pullRAIMultiChannel(featureStack);
 			RandomAccessibleInterval<FloatType> expected = Views.zeroMin(calculator.apply(Views.extendBorder(input), interval));
 			Utils.assertImagesEqual(50, expected, result);
 		}
@@ -58,9 +57,9 @@ public class CLIJFeatureCalculatorTest {
 			.build();
 		calculator.setGpu(gpu);
 		FinalInterval interval = Intervals.expand(input, -40);
-		try(CLIJMultiChannelImage featureStack = calculator.applyUseGpu(Views.extendBorder(input), interval))
+		try(GpuImage featureStack = calculator.applyUseGpu(Views.extendBorder(input), interval))
 		{
-			RandomAccessibleInterval<FloatType> result = featureStack.asRAI();
+			RandomAccessibleInterval<FloatType> result = gpu.pullRAIMultiChannel(featureStack);
 			RandomAccessibleInterval<FloatType> expected = Views.zeroMin(calculator.apply(Views.extendBorder(input), interval));
 			Utils.assertImagesEqual(50, expected, result);
 		}

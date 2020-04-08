@@ -49,4 +49,8 @@ public class GpuImage implements AutoCloseable {
 	public void writeTo(Buffer buffer, boolean blocking) {
 		clearClBuffer.writeTo(buffer, blocking);
 	}
+
+	public long getNumberOfChannels() {
+		return clearClBuffer.getNumberOfChannels();
+	}
 }
