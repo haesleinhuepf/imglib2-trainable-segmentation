@@ -52,8 +52,7 @@ class ClearCLBufferPool implements AutoCloseable {
 
 	@Override
 	public void close() {
-		for(Queue<ClearCLBuffer> list : unused.values())
-			closeAll(list);
+		clear();
 	}
 
 	private void closeAll(Queue<ClearCLBuffer> list) {
@@ -63,6 +62,11 @@ class ClearCLBufferPool implements AutoCloseable {
 				break;
 			buffer.close();
 		}
+	}
+
+	public void clear() {
+		for(Queue<ClearCLBuffer> list : unused.values())
+			closeAll(list);
 	}
 
 	private static class Specification {

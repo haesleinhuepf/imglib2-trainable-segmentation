@@ -1,9 +1,15 @@
 package net.imglib2.trainable_segmention.gpu.api;
 
+import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.haesleinhuepf.clij2.CLIJ2;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Supplier;
 
 public class DefaultGpuApi implements GpuApi {
 
@@ -11,14 +17,17 @@ public class DefaultGpuApi implements GpuApi {
 
 	private final ClearCLBufferPool pool;
 
+	private final static Set<ClearCLBufferPool> pools = new CopyOnWriteArraySet<>();
+
 	public DefaultGpuApi(CLIJ2 clij) {
 		this.clij = clij;
 		this.pool = new ClearCLBufferPool(clij.getCLIJ().getClearCLContext());
+		pools.add(pool);
 	}
 
 	@Override
 	public GpuImage create(long[] dimensions, long numberOfChannels, NativeTypeEnum type) {
-		return new GpuImage(pool.create(dimensions, numberOfChannels, type), pool::release);
+		return handleOutOfMemoryException( () -> new GpuImage(pool.create(dimensions, numberOfChannels, type), pool::release));
 	}
 
 	@Override
@@ -27,7 +36,13 @@ public class DefaultGpuApi implements GpuApi {
 	}
 
 	@Override
+	public Object exclusive() {
+		return clij;
+	}
+
+	@Override
 	public void close() {
+		pools.remove(pool);
 		pool.close();
 	}
 
@@ -38,6 +53,25 @@ public class DefaultGpuApi implements GpuApi {
 			if(value instanceof GpuImage)
 				parameters.put(key, ((GpuImage) value).clearCLBuffer());
 		}
-		clij.executeSubsequently(anchorClass, kernelFile, kernelName, null, globalSizes, localSizes, parameters, defines, null).close();
+		handleOutOfMemoryException(() -> {
+			clij.executeSubsequently(anchorClass, kernelFile, kernelName, null, globalSizes, localSizes, parameters, defines, null).close();
+			return null;
+		});
 	}
+
+	@Override
+	public <T> T handleOutOfMemoryException(Supplier<T> action) {
+		return action.get();
+//		try {
+//			return action.get();
+//		} catch (OpenCLException exception) {
+//			if(exception.getErrorCode() == -4) {
+//				pools.forEach(ClearCLBufferPool::clear);
+//				return action.get();
+//			}
+//			else
+//				throw exception;
+//		}
+	}
+
 }

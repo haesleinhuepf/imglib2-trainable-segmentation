@@ -2,10 +2,12 @@ package net.imglib2.trainable_segmention.gpu.api;
 
 import net.haesleinhuepf.clij.coremem.enums.NativeTypeEnum;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converter;
 import net.imglib2.converter.RealTypeConverters;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
+import preview.net.imglib2.loops.LoopBuilder;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.ByteType;
@@ -20,6 +22,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.Util;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import java.nio.Buffer;
@@ -47,7 +50,11 @@ public class GpuCopy {
 		}
 		else {
 			RandomAccessibleInterval<RealType<?>> tmp = new ArrayImgFactory<>((NativeType) targetType).create(source);
-			RealTypeConverters.copyFromTo(Views.zeroMin(source), tmp);
+			IntervalView< ? extends RealType< ? > > sourceInterval = Views.interval(Views.zeroMin(source), (RandomAccessibleInterval<? extends RealType<?>>) tmp);
+			RealType< ? > s = Util.getTypeFromInterval( sourceInterval );
+			RealType< ? > d = Util.getTypeFromInterval((RandomAccessibleInterval<? extends RealType<?>>) tmp);
+			Converter< RealType< ? >, RealType< ? > > copy = RealTypeConverters.getConverter( s, d );
+			LoopBuilder.setImages( sourceInterval, tmp ).multiThreaded().forEachPixel(copy::convert);
 			copyFromTo(tmp, target);
 		}
 	}

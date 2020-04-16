@@ -32,6 +32,7 @@ import weka.core.Attribute;
 import weka.core.Instances;
 
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,6 +53,8 @@ public class Segmenter {
 
 	private GpuApi gpu = null;
 
+	private final Semaphore semaphore = new Semaphore(2);
+
 	private Segmenter(List<String> classNames, FeatureCalculator features,
 			Classifier classifier)
 	{
@@ -67,7 +70,11 @@ public class Segmenter {
 	}
 
 	public void setUseGpu(boolean useGpu) {
-		this.gpu = useGpu ? GpuApi.getInstance() : null;
+		setGpu(useGpu ? GpuApi.getInstance() : null);
+	}
+
+	public void setGpu(GpuApi gpu) {
+		this.gpu = gpu;
 		features().setGpu(gpu);
 	}
 
@@ -123,11 +130,17 @@ public class Segmenter {
 	}
 
 	private void segmentGpu(RandomAccessible<?> image, RandomAccessibleInterval<? extends IntegerType<?>> out) {
-		try(GpuApi scope = gpu.subScope()) {
-			RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
-			GpuImage featureStack = features.applyUseGpu(scope, image, out);
-			GpuImage segmentationBuffer = prediction.segment(scope, featureStack);
-			GpuCopy.copyFromTo(segmentationBuffer, out);
+		try {
+			semaphore.acquire();
+			try(GpuApi scope = gpu.subScope()) {
+				RandomForestPrediction prediction = new RandomForestPrediction(Cast.unchecked(classifier), classNames.size(), features.count());
+				GpuImage featureStack = features.applyUseGpu(scope, image, out);
+				GpuImage segmentationBuffer = prediction.segment(scope, featureStack);
+				GpuCopy.copyFromTo(segmentationBuffer, out);
+			}
+		} catch (InterruptedException ignored) { }
+		finally {
+			semaphore.release();
 		}
 	}
 

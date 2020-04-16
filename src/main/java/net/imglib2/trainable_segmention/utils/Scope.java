@@ -39,4 +39,11 @@ public class Scope implements AutoCloseable {
 				throw new RuntimeException(exception);
 		}
 	}
+
+	public static final Scope create(AutoCloseable... autoCloseables) {
+		Scope scope = new Scope();
+		for(AutoCloseable autoCloseable : autoCloseables)
+			scope.register(autoCloseable);
+		return scope;
+	}
 }
