@@ -42,36 +42,32 @@ public class ParallelSegmentationBenchmark implements Runnable {
 
 	@Override
 	public void run() {
-		try(Scope scope = new Scope()) {
-			GpuApi gpu = scope.register(GpuApi.newInstance(null));
-
-			println("Hello World");
-			Segmenter segmenter = Segmenter.fromJson(context, GsonUtils.read("/home/arzt/Documents/Datasets/img_TL199_Chgreen.classifier"));
-			println("set use gpu");
-			segmenter.setGpu(gpu);
-			println("done");
-			CellLoader<UnsignedShortType> loader = cell -> segmenter.segment(cell, Views.extendBorder(image));
-			int cellSize = 64;
-			long imageSize = cellSize * 4;
-			int[] cellDims = {cellSize, cellSize, cellSize};
-			long[] imageDims = {imageSize, imageSize, imageSize};
-			Img<UnsignedShortType> segmentation = createCellImage(loader, imageDims, cellDims);
-			List<Interval> cells = getCells(new CellGrid(imageDims, cellDims));
-			TaskExecutor executor = TaskExecutors.fixedThreadPool(1);
-			StopWatch totalTime = StopWatch.createAndStart();
-			executor.forEach(cells, cell -> {
-				StopWatch watch = StopWatch.createAndStart();
-				RandomAccess<UnsignedShortType> ra = segmentation.randomAccess();
-				ra.setPosition(Intervals.minAsLongArray(cell));
-				ra.get();
-				println(watch);
-			});
-			totalTime.stop();
-			println("Total time: " + totalTime);
-			long timePerVoxel = totalTime.nanoTime() / Intervals.numElements(imageDims);
-			println("Total time per voxel " + timePerVoxel + " ns");
-			println("Total time per pixel " + timePerVoxel * cellSize / 1000 + " us");
-		}
+		println("Hello World");
+		Segmenter segmenter = Segmenter.fromJson(context, GsonUtils.read("/home/arzt/Documents/Datasets/img_TL199_Chgreen.classifier"));
+		println("set use gpu");
+		segmenter.setUseGpu(true);
+		println("done");
+		CellLoader<UnsignedShortType> loader = cell -> segmenter.segment(cell, Views.extendBorder(image));
+		int cellSize = 64 - index;
+		long imageSize = cellSize * 4;
+		int[] cellDims = {cellSize, cellSize, cellSize};
+		long[] imageDims = {imageSize, imageSize, imageSize};
+		Img<UnsignedShortType> segmentation = createCellImage(loader, imageDims, cellDims);
+		List<Interval> cells = getCells(new CellGrid(imageDims, cellDims));
+		TaskExecutor executor = TaskExecutors.fixedThreadPool(4);
+		StopWatch totalTime = StopWatch.createAndStart();
+		executor.forEach(cells, cell -> {
+			StopWatch watch = StopWatch.createAndStart();
+			RandomAccess<UnsignedShortType> ra = segmentation.randomAccess();
+			ra.setPosition(Intervals.minAsLongArray(cell));
+			ra.get();
+			println(watch);
+		});
+		totalTime.stop();
+		println("Total time: " + totalTime);
+		long timePerVoxel = totalTime.nanoTime() / Intervals.numElements(imageDims);
+		println("Total time per voxel " + timePerVoxel + " ns");
+		println("Total time per pixel " + timePerVoxel * cellSize / 1000 + " us");
 	}
 
 	private void println(Object object) {
@@ -79,7 +75,7 @@ public class ParallelSegmentationBenchmark implements Runnable {
 	}
 
 	public static void main(String... args) {
-		for (int i = 1; i <= 4; i++) {
+		for (int i = 1; i <= 2; i++) {
 			startThread(i);
 		}
 	}

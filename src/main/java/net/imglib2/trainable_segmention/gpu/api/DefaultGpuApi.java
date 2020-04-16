@@ -61,17 +61,17 @@ public class DefaultGpuApi implements GpuApi {
 
 	@Override
 	public <T> T handleOutOfMemoryException(Supplier<T> action) {
-		return action.get();
-//		try {
-//			return action.get();
-//		} catch (OpenCLException exception) {
-//			if(exception.getErrorCode() == -4) {
-//				pools.forEach(ClearCLBufferPool::clear);
-//				return action.get();
-//			}
-//			else
-//				throw exception;
-//		}
+		try {
+			return action.get();
+		} catch (OpenCLException exception) {
+			if(exception.getErrorCode() == -4) {
+				System.err.println("*** GPU memory, clear garbage ***");
+				pools.forEach(ClearCLBufferPool::clear);
+				return action.get();
+			}
+			else
+				throw exception;
+		}
 	}
 
 }
