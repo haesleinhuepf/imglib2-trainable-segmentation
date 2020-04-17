@@ -155,6 +155,17 @@
 			<artifactId>Trainable_Segmentation</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>net.clearcontrol</groupId>
+			<artifactId>clij-clearcl</artifactId>
+			<version>0.10.11</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.android.tools</groupId>
+					<artifactId>dx</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
 			<groupId>net.haesleinhuepf</groupId>
 			<artifactId>clij2_</artifactId>
 			<version>${clij2_.verson}</version>

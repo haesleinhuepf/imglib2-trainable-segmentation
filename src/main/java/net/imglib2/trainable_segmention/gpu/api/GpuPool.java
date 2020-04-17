@@ -10,6 +10,10 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 public class GpuPool {
 
+	private static final String OPEN_CL_DEVICE_NAME = null;
+
+	private static final int NUMBER_OF_OPENCL_CONTEXT_USED = 4;
+
 	private final GenericObjectPool<DefaultGpuApi> pool;
 
 	private static final GpuPool POOL = new GpuPool();
@@ -20,7 +24,7 @@ public class GpuPool {
 
 	private GpuPool() {
 		GenericObjectPoolConfig<DefaultGpuApi> config = new GenericObjectPoolConfig<>();
-		config.setMaxTotal(4);
+		config.setMaxTotal(NUMBER_OF_OPENCL_CONTEXT_USED);
 		config.setMinIdle(0);
 		config.setMinEvictableIdleTimeMillis(2000);
 		config.setTimeBetweenEvictionRunsMillis(500);
@@ -41,7 +45,7 @@ public class GpuPool {
 	}
 
 	public static synchronized CLIJ2 createCLIJ2() {
-		return new CLIJ2(new CLIJ(null));
+		return new CLIJ2(new CLIJ(OPEN_CL_DEVICE_NAME));
 	}
 
 	private static class MyObjectFactory implements PooledObjectFactory<DefaultGpuApi> {
