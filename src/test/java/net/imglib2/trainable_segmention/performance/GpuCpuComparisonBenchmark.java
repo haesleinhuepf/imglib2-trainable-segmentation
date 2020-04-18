@@ -13,25 +13,31 @@ import static org.junit.Assert.assertTrue;
 public class GpuCpuComparisonBenchmark {
 
 	public static void main(String... args) {
-		GpuPool.OPEN_CL_DEVICE_NAME = "HD";
-		ParallelSegmentationTask task = new ParallelSegmentationTask();
-		// Gpu
-		task.setUseGpu(true);
-		task.run();
-		task.printTimes();
-		Img<UnsignedShortType> gpuResult = task.getSegmenation();
-		long nanosecondsGpu = task.measuredTime().nanoTime();
+		GpuPool.OPEN_CL_DEVICE_NAME = "RTX";
 
-		// Cpu
-		task.setUseGpu(false);
-		task.run();
-		task.printTimes();
-		Img<UnsignedShortType> cpuResult = task.getSegmenation();
-		long nanosecondsCpu = task.measuredTime().nanoTime();
+		for (int size : new int[]{8, 16, 32, 64, 128}){
+			ParallelSegmentationTask task = new ParallelSegmentationTask(size);
+			System.out.println("--------------------------------------------------");
+			System.out.println("size: " + size);
 
-		System.out.println("Speed up: " + (float) nanosecondsCpu / nanosecondsGpu);
-		long differences = countDifferentPixels(gpuResult, cpuResult);
-		assertTrue(differences < Intervals.numElements(cpuResult) / 10000 );
+			// Gpu
+			task.setUseGpu(true);
+			task.run();
+			task.printTimes();
+			Img<UnsignedShortType> gpuResult = task.getSegmenation();
+			long nanosecondsGpu = task.measuredTime().nanoTime();
+
+			// Cpu
+			task.setUseGpu(false);
+			task.run();
+			task.printTimes();
+			Img<UnsignedShortType> cpuResult = task.getSegmenation();
+			long nanosecondsCpu = task.measuredTime().nanoTime();
+
+			System.out.println("Speed up: " + (float) nanosecondsCpu / nanosecondsGpu);
+			long differences = countDifferentPixels(gpuResult, cpuResult);
+			assertTrue(differences < Intervals.numElements(cpuResult) / 10000);
+		}
 	}
 
 	public static long countDifferentPixels(Img<UnsignedShortType> gpuResult, Img<UnsignedShortType> cpuResult) {

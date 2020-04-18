@@ -26,10 +26,19 @@ public class ParallelSegmentationTask implements Runnable {
 	private final Segmenter segmenter = Segmenter.fromJson(context,
 			GsonUtils.read(ParallelSegmentationTask.class.getResourceAsStream("/clij/t1-head.classifier")));
 
-	private int cellSize = 64;
-	private final int[] cellDims = {cellSize, cellSize, cellSize};
-	private final long[] imageDims = {cellSize * 4, cellSize * 4, cellSize * 2};
+	private int cellSize;
+	private final int[] cellDims;
+	private final long[] imageDims;
 
+	public ParallelSegmentationTask() {
+		this(64);
+	}
+
+	public ParallelSegmentationTask(int cellSize) {
+		this.cellSize = cellSize;
+		cellDims = new int[]{cellSize, cellSize, cellSize};
+		imageDims = new long[]{cellSize * 4, cellSize * 4, cellSize * 2};
+	}
 	private StopWatch measuredTime;
 
 	private Img<UnsignedShortType> segmenation;
