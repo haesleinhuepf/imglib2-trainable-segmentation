@@ -1,6 +1,7 @@
 package net.imglib2.trainable_segmention.performance;
 
 import net.imglib2.img.Img;
+import net.imglib2.trainable_segmention.gpu.api.GpuPool;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.util.Intervals;
 import preview.net.imglib2.loops.LoopBuilder;
@@ -12,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 public class GpuCpuComparisonBenchmark {
 
 	public static void main(String... args) {
+		GpuPool.OPEN_CL_DEVICE_NAME = "HD";
 		ParallelSegmentationTask task = new ParallelSegmentationTask();
 		// Gpu
 		task.setUseGpu(true);

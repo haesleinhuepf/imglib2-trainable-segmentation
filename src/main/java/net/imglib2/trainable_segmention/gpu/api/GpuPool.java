@@ -10,7 +10,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 public class GpuPool {
 
-	private static final String OPEN_CL_DEVICE_NAME = null;
+	public static String OPEN_CL_DEVICE_NAME = null;
 
 	private static final int NUMBER_OF_OPENCL_CONTEXT_USED = 4;
 
@@ -45,7 +45,9 @@ public class GpuPool {
 	}
 
 	public static synchronized CLIJ2 createCLIJ2() {
-		return new CLIJ2(new CLIJ(OPEN_CL_DEVICE_NAME));
+		CLIJ2 clij2 = new CLIJ2(new CLIJ(OPEN_CL_DEVICE_NAME));
+		System.out.println("GPU: " + clij2.getGPUName());
+		return clij2;
 	}
 
 	private static class MyObjectFactory implements PooledObjectFactory<DefaultGpuApi> {
