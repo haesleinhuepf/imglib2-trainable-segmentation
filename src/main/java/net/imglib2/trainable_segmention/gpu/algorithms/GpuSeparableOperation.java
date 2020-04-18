@@ -67,8 +67,8 @@ class GpuSeparableOperation implements GpuNeighborhoodOperation {
 		defines.put("BLOCK_SIZE", localSizes[0]);
 		setSkips(defines, "INPUT", input, d);
 		setSkips(defines, "OUTPUT", output, d);
-		defines.put("OUTPUT_IMAGE_PARAMETER", "__write_only __global float* output");
-		defines.put("INPUT_IMAGE_PARAMETER", "__read_only __global float* input");
+		defines.put("OUTPUT_IMAGE_PARAMETER", "__global float* output");
+		defines.put("INPUT_IMAGE_PARAMETER", "__global float* input");
 		defines.put("OUTPUT_WRITE_PIXEL(x,y,z,v)", "output[OUTPUT_OFFSET + OUTPUT_X_SKIP * (x) + OUTPUT_Y_SKIP * (y) + OUTPUT_Z_SKIP * (z)] = v;");
 		defines.put("INPUT_READ_PIXEL(x,y,z)", "input[INPUT_OFFSET + INPUT_X_SKIP * (x) + INPUT_Y_SKIP * (y) + INPUT_Z_SKIP * (z)]");
 		long[] globalSizes = getDimensions(output.dimensions());
