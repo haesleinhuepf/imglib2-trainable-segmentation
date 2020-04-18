@@ -355,7 +355,7 @@ public class Utils {
 			RandomAccess<UnsignedShortType> ra = segmentation.randomAccess();
 			ra.setPosition(cellCenter);
 			ra.get();
-			System.out.println("step " + counter.incrementAndGet() + "/" + cellCenters.size());
+			//System.out.println("step " + counter.incrementAndGet() + "/" + cellCenters.size());
 		});
 	}
 
